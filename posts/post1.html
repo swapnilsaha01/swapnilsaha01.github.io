@@ -1,1 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Approximating a Definite Integral Using Uniform(0,1) Random Numbers</title>
 
+<!-- MathJax for LaTeX rendering -->
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] },
+  svg: { fontCache: 'global' }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<style>
+body {
+    background-color: #0d1117;
+    color: #e6edf3;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen;
+    max-width: 900px;
+    margin: auto;
+    padding: 40px 20px;
+    line-height: 1.7;
+}
+
+h1, h2, h3 {
+    color: #58a6ff;
+}
+
+code {
+    background-color: #161b22;
+    padding: 4px 6px;
+    border-radius: 6px;
+}
+
+pre {
+    background-color: #161b22;
+    padding: 15px;
+    overflow-x: auto;
+    border-radius: 8px;
+}
+
+img {
+    width: 100%;
+    border-radius: 10px;
+    margin: 20px 0;
+}
+
+blockquote {
+    border-left: 4px solid #58a6ff;
+    padding-left: 15px;
+    color: #8b949e;
+}
+hr {
+    border: 1px solid #30363d;
+    margin: 40px 0;
+}
+.footer {
+    margin-top: 60px;
+    color: #8b949e;
+    font-size: 0.9em;
+}
+</style>
+</head>
+
+<body>
+
+<h1> Approximating a Definite Integral Using Uniform(0,1) Random Numbers</h1>
+
+<p>
+Numerical integration is traditionally introduced using deterministic techniques such as the trapezoidal rule or Simpson’s rule.
+But there exists a fundamentally different idea:
+</p>
+
+<blockquote>
+Replace the integral with an expectation. <br>
+Estimate the expectation using randomness.
+</blockquote>
+
+<p>
+This idea forms the foundation of <strong>Monte Carlo Integration</strong>.
+</p>
+
+<hr>
+
+<h2>1. The Core Idea</h2>
+
+<p>Suppose we want to compute:</p>
+
+\[
+I = \int_0^1 f(x)\,dx
+\]
+
+<p>Let</p>
+
+\[
+U_1, U_2, \dots, U_n \sim \text{Unif}(0,1)
+\]
+
+\[
+\mathbb{E}[f(U)] = \int_0^1 f(x)\,dx
+\]
+
+<p>By the Law of Large Numbers,</p>
+
+\[
+\frac{1}{n}\sum_{i=1}^n f(U_i)
+\longrightarrow
+\int_0^1 f(x)\,dx
+\]
+
+<p>The Monte Carlo estimator is:</p>
+
+\[
+\hat I_n = \frac{1}{n} \sum_{i=1}^n f(U_i)
+\]
+
+<hr>
+
+<hr>
+
+<h2>Change of Variable: When the Limits Are Not 0 to 1</h2>
+
+<p>
+So far, we assumed the integral was over the interval [0,1].
+But what if we want to compute:
+</p>
+
+\[
+I = \int_a^b f(x)\,dx
+\]
+
+<p>
+We can still use Uniform(0,1) random numbers by performing a simple change of variable.
+</p>
+
+<h3>Step 1: Start with</h3>
+
+\[
+U \sim \text{Unif}(0,1)
+\]
+
+<h3>Step 2: Transform the Variable</h3>
+
+<p>
+Define:
+</p>
+
+\[
+X = a + (b-a)U
+\]
+
+<p>
+This transformation stretches and shifts the uniform distribution from [0,1] to [a,b].
+Now:
+</p>
+
+\[
+X \sim \text{Unif}(a,b)
+\]
+
+<h3>Step 3: Substitute into the Integral</h3>
+
+<p>
+Using change of variables:
+</p>
+
+\[
+x = a + (b-a)u
+\]
+
+\[
+dx = (b-a)du
+\]
+
+<p>
+Therefore,
+</p>
+
+\[
+\int_a^b f(x)\,dx
+=
+\int_0^1 f(a + (b-a)u)(b-a)\,du
+\]
+
+<h3>Monte Carlo Estimator</h3>
+
+<p>
+Now we approximate the integral using samples \(U_i\):
+</p>
+
+\[
+\hat I_n
+=
+(b-a)\frac{1}{n}
+\sum_{i=1}^n
+f(a + (b-a)U_i)
+\]
+
+<p>
+This shows that any definite integral over a finite interval can be reduced to integration over [0,1].
+</p>
+
+<p>
+The Uniform(0,1) distribution is therefore sufficient to approximate integrals over <em>any</em> finite interval.
+</p>
+  
+<h2>2. General Interval [a,b]</h2>
+
+\[
+I = \int_a^b f(x)\,dx
+\]
+
+<p>Generate</p>
+
+\[
+U_i \sim \text{Unif}(0,1)
+\]
+
+<p>Transform</p>
+
+\[
+X_i = a + (b-a)U_i
+\]
+
+\[
+\hat I_n = (b-a)\frac{1}{n}\sum_{i=1}^n f(X_i)
+\]
+
+<hr>
+
+<h2>3. Geometric Interpretation</h2>
+
+<img src="https://upload.wikimedia.org/wikipedia/commons/8/84/MonteCarloIntegrationExample.svg" alt="Monte Carlo Integration">
+
+<p>
+Think of the integral as the <strong>average height</strong> of the function multiplied by the interval width.
+Monte Carlo estimates the average height using random samples.
+</p>
+
+<hr>
+
+<h2>4. Algorithm</h2>
+
+<ol>
+<li>Generate \(U_1, \dots, U_n \sim \text{Unif}(0,1)\)</li>
+<li>Compute \(X_i = a + (b-a)U_i\)</li>
+<li>Compute 
+\[
+\hat I_n = (b-a)\frac{1}{n}\sum_{i=1}^n f(X_i)
+\]
+</li>
+</ol>
+
+<hr>
+
+<h2>5. Python Implementation</h2>
+
+<pre><code>import numpy as np
+
+def monte_carlo_integral(f, a, b, n=10000):
+    U = np.random.uniform(0, 1, n)
+    X = a + (b - a) * U
+    return (b - a) * np.mean(f(X))
+
+f = lambda x: x**2
+
+estimate = monte_carlo_integral(f, 0, 1, 100000)
+print("Monte Carlo Estimate:", estimate)
+print("True Value:", 1/3)
+</code></pre>
+
+<hr>
+
+<h2>6. Statistical Properties</h2>
+
+<h3>Unbiasedness</h3>
+
+\[
+\mathbb{E}[\hat I_n] = I
+\]
+
+<p>The estimator is unbiased.</p>
+
+<h3>Variance</h3>
+
+\[
+\text{Var}(\hat I_n)
+=
+\frac{(b-a)^2}{n}
+\text{Var}(f(U))
+\]
+
+<p>
+Standard error behaves as \(O(1/\sqrt{n})\).
+</p>
+
+<hr>
+
+<h2>7. Central Limit Theorem</h2>
+
+\[
+\sqrt{n}(\hat I_n - I)
+\xrightarrow{d}
+\mathcal{N}(0,\sigma^2)
+\]
+
+<p>Approximate 95% confidence interval:</p>
+
+\[
+\hat I_n \pm 1.96 \cdot \frac{\hat\sigma}{\sqrt{n}}
+\]
+
+<hr>
+
+<h2>8. A Famous Example: Estimating π</h2>
+
+<img src="https://upload.wikimedia.org/wikipedia/commons/2/20/MonteCarloIntegrationCircle.svg" alt="Monte Carlo Pi Estimation">
+
+\[
+\pi = 4 \cdot \mathbb{P}(X^2 + Y^2 \le 1)
+\]
+
+<p>
+Generate random points in the unit square and compute the proportion inside the quarter circle.
+Multiply by 4 to approximate π.
+</p>
+
+<hr>
+
+<h2>Final Thoughts</h2>
+
+<p>
+A definite integral is simply an expectation under a uniform distribution.
+Monte Carlo replaces area computation with averaging randomness.
+</p>
+
+<div class="footer">
+— Swapnil Saha <br>
+</div>
+
+</body>
+</html>
