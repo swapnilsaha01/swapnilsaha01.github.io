@@ -185,12 +185,88 @@
 
   <section id="contact" class="container">
     <h2 class="section-title">Contact</h2>
-    <div class="card">
-      <p>Email: 2001swapnil.saha@gmail.com
-        GitHub: https://github.com/swapnilsaha01/ 
-        LinkedIn: https://www.linkedin.com/in/swapnil-saha-183012229/
-        </p>
-    </div>
+   <section id="contact" class="container">
+  <h2 class="section-title">Contact</h2>
+
+  <div class="card contact-card">
+    <p style="margin-bottom: 18px; color: var(--muted);">
+      Feel free to reach out for collaborations, research discussions, or just to connect.
+    </p>
+
+```
+<div class="contact-list">
+  
+  <div class="contact-item">
+    <span class="contact-label">📧 Email</span>
+    <a href="mailto:2001swapnil.saha@gmail.com" class="contact-link">
+      2001swapnil.saha@gmail.com
+    </a>
+  </div>
+
+  <div class="contact-item">
+    <span class="contact-label">🐙 GitHub</span>
+    <a href="https://github.com/swapnilsaha01/" target="_blank" class="contact-link">
+      github.com/swapnilsaha01
+    </a>
+  </div>
+
+  <div class="contact-item">
+    <span class="contact-label">💼 LinkedIn</span>
+    <a href="https://www.linkedin.com/in/swapnil-saha-183012229/" target="_blank" class="contact-link">
+      linkedin.com/in/swapnil-saha-183012229
+    </a>
+  </div>
+
+</div>
+```
+
+  </div>
+</section>
+
+<style>
+.contact-card {
+  max-width: 700px;
+}
+
+.contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.contact-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #222;
+  background: rgba(255,255,255,0.02);
+  transition: border 0.2s ease, transform 0.2s ease;
+}
+
+.contact-item:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.contact-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.contact-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.contact-link:hover {
+  text-decoration: underline;
+}
+</style>
+
   </section>
 
   <footer>
