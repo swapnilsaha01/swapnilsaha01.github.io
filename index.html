@@ -46,9 +46,7 @@
       font-weight: 500;
     }
 
-    nav a:hover {
-      color: var(--accent);
-    }
+    nav a:hover { color: var(--accent); }
 
     .container {
       max-width: 1100px;
@@ -66,9 +64,7 @@
       margin-bottom: 10px;
     }
 
-    .hero p {
-      color: var(--muted);
-    }
+    .hero p { color: var(--muted); }
 
     .section-title {
       font-size: 2rem;
@@ -94,6 +90,25 @@
       border-color: var(--accent);
     }
 
+    .blog-post { margin-bottom: 20px; }
+
+    .blog-post a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .blog-post a:hover { text-decoration: underline; }
+
+    .view-all {
+      display: inline-block;
+      margin-top: 10px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+
+    .view-all:hover { color: var(--accent); }
+
     footer {
       text-align: center;
       padding: 40px 20px;
@@ -102,18 +117,8 @@
       margin-top: 60px;
     }
 
-    .blog-post {
-      margin-bottom: 20px;
-    }
-
-    .blog-post h3 {
-      margin-bottom: 6px;
-    }
-
     @media (max-width: 600px) {
-      .hero h1 {
-        font-size: 2.2rem;
-      }
+      .hero h1 { font-size: 2.2rem; }
     }
   </style>
 </head>
@@ -123,7 +128,7 @@
     <nav>
       <a href="#about">About</a>
       <a href="#projects">Projects</a>
-      <a href="#blog">Blog</a>
+      <a href="blog.html">Blog</a>
       <a href="#contact">Contact</a>
     </nav>
   </header>
@@ -161,17 +166,20 @@
     </div>
   </section>
 
+  <!-- BLOG PREVIEW SECTION -->
   <section id="blog" class="container">
     <h2 class="section-title">Blog</h2>
     <div class="card">
       <div class="blog-post">
-        <h3>First Post</h3>
-        <p>Write your first blog post here.</p>
+        <h3>
+          <a href="posts/post1.html">
+            Approximating Definite Integrals Using Monte Carlo
+          </a>
+        </h3>
+        <p>A stochastic approach to numerical integration.</p>
       </div>
-      <div class="blog-post">
-        <h3>Second Post</h3>
-        <p>Write another post here.</p>
-      </div>
+
+      <a class="view-all" href="blog.html">→ View all posts</a>
     </div>
   </section>
 
