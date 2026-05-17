@@ -304,7 +304,7 @@ section { position: relative; }
 
 .projects-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 16px;
 }
 
@@ -488,7 +488,107 @@ footer p {
   font-family: var(--mono);
 }
 
-/* ── ANIMATIONS ── */
+.edu-item {
+  padding: 14px 18px;
+  border-left: 2px solid var(--faint);
+  background: var(--surface);
+  border-radius: 0 8px 8px 0;
+}
+.edu-degree {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.edu-year {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--faint);
+  font-weight: 400;
+  white-space: nowrap;
+}
+.edu-school {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+/* ── RESEARCH PAPER CARD ── */
+.paper-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 28px 32px;
+  transition: border-color 0.25s, background 0.25s;
+}
+.paper-card:hover {
+  border-color: var(--border-hover);
+  background: var(--surface2);
+}
+.paper-venue {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 3px 10px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  background: rgba(167,139,250,0.12);
+  color: #c4b5fd;
+  border: 1px solid rgba(167,139,250,0.2);
+  text-transform: uppercase;
+}
+.paper-title {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 400;
+  color: #f0eeff;
+  line-height: 1.3;
+  margin-bottom: 12px;
+}
+.paper-abstract {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.75;
+  margin-bottom: 20px;
+  max-width: 820px;
+}
+.paper-keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.kw {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--faint);
+  border: 1px solid var(--border);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.paper-links { display: flex; gap: 12px; }
+
+/* ── HERO BUTTON FIX ── */
+.hero-actions a:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  background: var(--accent);
+  color: #0a0816;
+  transition: background 0.2s;
+}
+.hero-actions a:first-child:hover { background: #c4b5fd; }
 .fade-in {
   opacity: 0;
   transform: translateY(20px);
@@ -510,6 +610,7 @@ footer p {
   footer { padding: 20px; flex-direction: column; gap: 8px; text-align: center; }
   .about-layout { grid-template-columns: 1fr; gap: 32px; }
   .projects-grid { grid-template-columns: 1fr; }
+  .paper-card { padding: 20px; }
   .contact-grid { grid-template-columns: 1fr; }
   nav a:not(.nav-cta) { display: none; }
 }
@@ -521,11 +622,11 @@ footer p {
   <a href="#" class="logo">SS</a>
   <nav>
     <a href="#about">About</a>
+    <a href="#research">Research</a>
     <a href="#projects">Projects</a>
     <a href="#blog">Blog</a>
     <a href="#contact">Contact</a>
-    <!-- Uncomment when you have a CV ready: -->
-    <!-- <a href="cv.pdf" class="nav-cta" target="_blank">CV ↗</a> -->
+    <a href="CV1.pdf" class="nav-cta" target="_blank">CV ↗</a>
   </nav>
 </header>
 
@@ -533,10 +634,10 @@ footer p {
 <div class="hero">
   <div class="hero-glow"></div>
   <div class="hero-eyebrow fade-in">MSc Data Science · Madras School of Economics</div>
-  <h1 class="fade-in delay-1">Where <em>machine learning</em><br>meets game theory</h1>
-  <p class="hero-sub fade-in delay-2">I study statistical learning, stochastic methods, and strategic behavior in multi-agent systems. When I'm not doing math, I'm playing technical death metal.</p>
+  <h1 class="fade-in delay-1">Machine learning,<br><em>game theory</em>, and graphs</h1>
+  <p class="hero-sub fade-in delay-2">I work at the intersection of machine learning, game theory, graph theory, and financial econometrics — building models that are both theoretically grounded and empirically testable.</p>
   <div class="hero-actions fade-in delay-3">
-    <a href="#projects" class="btn btn-primary">View my work</a>
+    <a href="#research">View my work</a>
     <a href="#blog" class="btn btn-ghost">Read the blog →</a>
   </div>
 </div>
@@ -547,55 +648,140 @@ footer p {
     <div class="section-label">About</div>
     <div class="about-layout">
       <div class="about-text">
-        <p>I'm an <strong>MSc Data Science</strong> student at the Madras School of Economics, working at the intersection of statistical theory and computational methods.</p>
-        <p>My work spans <strong>machine learning theory</strong>, <strong>Bayesian inference</strong>, and <strong>game-theoretic models</strong> — areas where rigorous math meets real-world complexity.</p>
-        <p>Outside academia, I channel the same obsession with structure into <strong>technical and progressive death metal</strong> guitar.</p>
+        <p>I'm an <strong>MSc Data Science</strong> student at the Madras School of Economics, currently serving as a <strong>Teaching Assistant</strong> for Introduction to Machine Learning. Previously, I read Economics (Hons.) at Presidency University, Kolkata.</p>
+        <p>My research sits at the intersection of <strong>machine learning</strong>, <strong>game theory</strong>, <strong>graph theory</strong>, and <strong>financial econometrics</strong> — areas where rigorous mathematical structure meets empirical complexity.</p>
+        <p>Outside academia: badminton, chess, guitar, writing music and poetry, and collecting fountain pens.</p>
+
+        <div style="margin-top:32px;">
+          <div class="section-label" style="margin-bottom:16px;">Education</div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div class="edu-item">
+              <div class="edu-degree">M.Sc Data Science <span class="edu-year">2025–2027</span></div>
+              <div class="edu-school">Madras School of Economics, Chennai</div>
+            </div>
+            <div class="edu-item">
+              <div class="edu-degree">B.Sc Economics (Hons.) <span class="edu-year">2022–2025</span></div>
+              <div class="edu-school">Presidency University, Kolkata</div>
+            </div>
+          </div>
+        </div>
       </div>
+
       <div class="interests">
         <div class="interest-item">
-          <span class="interest-icon">📐</span>
-          <h4>Statistical learning theory</h4>
-          <p>Estimation, hypothesis testing, sufficiency, and the theoretical foundations of inference.</p>
-        </div>
-        <div class="interest-item">
-          <span class="interest-icon">🎲</span>
-          <h4>Stochastic methods</h4>
-          <p>Monte Carlo simulation, Markov chains, and probabilistic approximation techniques.</p>
+          <span class="interest-icon">🤖</span>
+          <h4>Machine learning</h4>
+          <p>Statistical learning theory, model selection, and applied ML across finance and economics.</p>
         </div>
         <div class="interest-item">
           <span class="interest-icon">♟️</span>
           <h4>Game theory</h4>
-          <p>Equilibrium computation, mechanism design, and strategic behavior in multi-agent settings.</p>
+          <p>Strategic complementarities, fixed-point theorems, equilibrium existence in network settings.</p>
+        </div>
+        <div class="interest-item">
+          <span class="interest-icon">🕸️</span>
+          <h4>Graph theory</h4>
+          <p>Multiplex networks, contagion dynamics, and structural properties of social and financial graphs.</p>
+        </div>
+        <div class="interest-item">
+          <span class="interest-icon">📈</span>
+          <h4>Financial econometrics</h4>
+          <p>Sentiment indices, regime detection, time series analysis, and behavioural finance.</p>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── PROJECTS ── -->
-<section id="projects">
+<!-- ── RESEARCH ── -->
+<section id="research">
   <div class="container">
-    <div class="section-label">Projects</div>
-    <div class="projects-grid">
+    <div class="section-label">Research</div>
 
-      <div class="project-card">
-        <span class="project-tag tag-stats">Coming soon</span>
-        <h3>Project One</h3>
-        <p style="color:var(--faint);font-style:italic;">Description coming soon.</p>
+    <!-- SSRN Paper -->
+    <div class="paper-card" style="margin-bottom:16px;">
+      <div class="paper-venue">Preprint · SSRN 2026</div>
+      <div class="paper-title">Empirical Construction and Cross-Market Applications of a Global Fear &amp; Greed Index (GFGI) and Sentiment Divergence Index (SDI)</div>
+      <p class="paper-abstract">Constructs a volatility-weighted Global Fear &amp; Greed Index fusing equity and crypto sentiment, and a Sentiment Divergence Index measuring cross-market behavioural dislocation. Replaces hand-drawn regime thresholds with a Gaussian Mixture Model on the joint (GFGI, SDI) space, followed by a softmax classifier for real-time probabilistic regime assignment (94.2% out-of-sample accuracy). The Crypto-Led Greed regime produces a statistically significant mean 10-day BTC return of +6.69%. A dynamic allocation strategy improves the Sortino ratio by 5.1% and Calmar ratio by 14.5% over a static 50/50 benchmark, while reducing maximum drawdown from −13.3% to −11.9%.</p>
+      <div class="paper-keywords">
+        <span class="kw">Behavioural Finance</span>
+        <span class="kw">Sentiment Indices</span>
+        <span class="kw">Gaussian Mixture Model</span>
+        <span class="kw">Regime Detection</span>
+        <span class="kw">Portfolio Allocation</span>
+        <span class="kw">Cryptocurrency</span>
       </div>
-
-      <div class="project-card">
-        <span class="project-tag tag-ml">Coming soon</span>
-        <h3>Project Two</h3>
-        <p style="color:var(--faint);font-style:italic;">Description coming soon.</p>
+      <div class="paper-links">
+        <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6694378" target="_blank" class="btn btn-primary" style="font-size:13px;padding:8px 18px;">Read on SSRN ↗</a>
       </div>
+    </div>
 
-      <div class="project-card">
-        <span class="project-tag tag-game">Coming soon</span>
-        <h3>Project Three</h3>
-        <p style="color:var(--faint);font-style:italic;">Description coming soon.</p>
+    <!-- Academic Projects -->
+    <div style="margin-top:48px;">
+      <div class="section-label" style="margin-bottom:24px;">Academic projects</div>
+      <div class="projects-grid">
+
+        <div class="project-card">
+          <span class="project-tag tag-stats">Epidemic Modelling · Finance</span>
+          <h3>Optimized Multiplex SIR Contagion Model</h3>
+          <p>Implemented a discrete-time SIR contagion model on a 4-layer multiplex financial network. Derived exact MLE estimators for layer-specific transmission rates, delivering 50–400× speedup via analytic shortcuts — reducing time complexity from O(n²) to O(n).</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:16px;">
+            <span class="kw">Graph Theory</span><span class="kw">Algorithms</span><span class="kw">Finance</span>
+          </div>
+        </div>
+
+        <div class="project-card">
+          <span class="project-tag tag-ml">Finance · ML · Time Series</span>
+          <h3>Gold FOMO Index</h3>
+          <p>Developed a composite Search Volume Index of investor sentiment toward gold and other precious metals. Analyzed persistence and volatility linkages via AR(1), OLS, and quantile regressions, then benchmarked predictive power using machine learning models.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:16px;">
+            <span class="kw">Econometrics</span><span class="kw">Sentiment</span><span class="kw">ML</span>
+          </div>
+        </div>
+
+        <div class="project-card">
+          <span class="project-tag tag-game">Coming soon</span>
+          <h3>More projects</h3>
+          <p style="color:var(--faint);font-style:italic;">Additional projects — econometric analyses of climate change impact on Indian food prices, Okun's Law, and global life expectancy — coming soon.</p>
+        </div>
+
       </div>
+    </div>
 
+    <!-- GitHub Projects -->
+    <div style="margin-top:48px;">
+      <div class="section-label" style="margin-bottom:24px;">GitHub projects</div>
+      <div class="projects-grid">
+
+        <div class="project-card">
+          <span class="project-tag tag-ml">Machine Learning</span>
+          <h3>EV Battery Intelligence Platform</h3>
+          <p>A data platform for electric vehicle battery analytics and intelligence.</p>
+          <a href="https://github.com/swapnilsaha01" target="_blank" class="project-link" style="margin-top:auto;padding-top:16px;">View on GitHub →</a>
+        </div>
+
+        <div class="project-card">
+          <span class="project-tag tag-stats">Finance · Simulation</span>
+          <h3>Simulation of a Limit Order Book</h3>
+          <p>Simulates the mechanics of a financial limit order book, modeling price formation and order matching.</p>
+          <a href="https://github.com/swapnilsaha01" target="_blank" class="project-link" style="margin-top:auto;padding-top:16px;">View on GitHub →</a>
+        </div>
+
+        <div class="project-card">
+          <span class="project-tag tag-ml">Machine Learning</span>
+          <h3>Image Segmentation via K-means</h3>
+          <p>Implements image segmentation from scratch using K-means clustering on pixel color spaces.</p>
+          <a href="https://github.com/swapnilsaha01" target="_blank" class="project-link" style="margin-top:auto;padding-top:16px;">View on GitHub →</a>
+        </div>
+
+        <div class="project-card">
+          <span class="project-tag tag-ml">Machine Learning</span>
+          <h3>Recursive Binary Splitting from Scratch</h3>
+          <p>A ground-up implementation of recursive binary splitting for decision tree construction.</p>
+          <a href="https://github.com/swapnilsaha01" target="_blank" class="project-link" style="margin-top:auto;padding-top:16px;">View on GitHub →</a>
+        </div>
+
+      </div>
     </div>
   </div>
 </section>
@@ -676,7 +862,7 @@ const observer = new IntersectionObserver((entries) => {
   });
 }, { threshold: 0.1 });
 
-document.querySelectorAll('.project-card, .interest-item, .contact-card, .blog-row').forEach(el => {
+document.querySelectorAll('.project-card, .interest-item, .contact-card, .blog-row, .paper-card, .edu-item').forEach(el => {
   el.style.opacity = '0';
   el.style.transform = 'translateY(16px)';
   el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
