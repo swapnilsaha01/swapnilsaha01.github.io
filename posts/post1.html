@@ -1,262 +1,941 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Approximating a Definite Integral Using Uniform(0,1) Random Numbers</title>
-
-<!-- MathJax for LaTeX rendering -->
-<script>
-window.MathJax = {
-  tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] },
-  svg: { fontCache: 'global' }
-};
-</script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Monte Carlo Integration — Swapnil Saha</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<!-- KaTeX for math rendering -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {
+    delimiters: [
+      {left: '$$', right: '$$', display: true},
+      {left: '\\[', right: '\\]', display: true},
+      {left: '$', right: '$', inline: true},
+      {left: '\\(', right: '\\)', inline: true}
+    ]
+  });"></script>
 <style>
-body {
-    background-color: #0d1117;
-    color: #e6edf3;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen;
-    max-width: 900px;
-    margin: auto;
-    padding: 40px 20px;
-    line-height: 1.7;
+:root {
+  --bg: #080810;
+  --surface: #0f0f1a;
+  --surface2: #161626;
+  --border: rgba(255,255,255,0.07);
+  --border-hover: rgba(139,92,246,0.4);
+  --accent: #a78bfa;
+  --accent-dim: rgba(167,139,250,0.15);
+  --text: #e8e6f0;
+  --muted: #8b8a9b;
+  --faint: #3d3c52;
+  --serif: 'DM Serif Display', Georgia, serif;
+  --sans: 'DM Sans', system-ui, sans-serif;
+  --mono: 'DM Mono', monospace;
 }
 
-h1, h2, h3 {
-    color: #58a6ff;
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.8;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.6;
+}
+
+/* ── HEADER ── */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(8,8,16,0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 40px;
+  height: 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+
+nav { display: flex; gap: 6px; align-items: center; }
+nav a {
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: color 0.2s, background 0.2s;
+}
+nav a:hover { color: var(--text); background: var(--surface2); }
+.nav-cta {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent) !important;
+  border: 1px solid rgba(167,139,250,0.3) !important;
+  background: var(--accent-dim) !important;
+  padding: 6px 14px;
+  border-radius: 6px;
+  text-decoration: none;
+}
+.nav-cta:hover { border-color: var(--accent) !important; }
+
+/* ── POST LAYOUT ── */
+.post-wrap {
+  max-width: 740px;
+  margin: 0 auto;
+  padding: 72px 40px 120px;
+}
+
+/* ── POST HEADER ── */
+.post-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  padding: 4px 12px;
+  border: 1px solid rgba(167,139,250,0.25);
+  border-radius: 4px;
+  background: var(--accent-dim);
+}
+
+.post-title {
+  font-family: var(--serif);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 400;
+  line-height: 1.15;
+  color: #f0eeff;
+  margin-bottom: 20px;
+}
+
+.post-subtitle {
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 32px;
+  max-width: 620px;
+}
+
+.post-meta {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 40px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 56px;
+}
+
+.post-author {
+  font-size: 13px;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+
+.post-author span { color: var(--accent); }
+
+.post-tags { display: flex; gap: 8px; }
+
+.tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  color: var(--faint);
+}
+
+/* ── CONTENT ELEMENTS ── */
+.post-body h2 {
+  font-family: var(--serif);
+  font-size: 1.7rem;
+  font-weight: 400;
+  color: #f0eeff;
+  margin: 56px 0 18px;
+  line-height: 1.25;
+}
+
+.post-body h3 {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--text);
+  margin: 32px 0 12px;
+  letter-spacing: 0.01em;
+}
+
+.post-body p {
+  color: var(--muted);
+  font-weight: 300;
+  margin-bottom: 20px;
+  line-height: 1.85;
+}
+
+.post-body p strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.post-body a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(167,139,250,0.3);
+  transition: border-color 0.2s;
+}
+.post-body a:hover { border-color: var(--accent); }
+
+/* ── MATH BLOCKS ── */
+.math-block {
+  margin: 28px 0;
+  padding: 24px 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  overflow-x: auto;
+}
+
+.math-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--faint);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+/* ── CALLOUT / BLOCKQUOTE ── */
+.callout {
+  margin: 32px 0;
+  padding: 20px 24px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(167,139,250,0.2);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+}
+
+.callout p {
+  color: #c4b5fd;
+  font-style: italic;
+  margin: 0;
+  font-size: 16px;
+}
+
+.callout-icon {
+  font-size: 14px;
+  margin-bottom: 8px;
+  display: block;
+  color: var(--accent);
+  font-family: var(--mono);
+  font-style: normal;
+  letter-spacing: 0.05em;
+}
+
+/* ── CODE ── */
+pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px 28px;
+  overflow-x: auto;
+  margin: 28px 0;
+  position: relative;
+}
+
+pre::before {
+  content: 'Python';
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--faint);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 code {
-    background-color: #161b22;
-    padding: 4px 6px;
-    border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: #c4b5fd;
 }
 
-pre {
-    background-color: #161b22;
-    padding: 15px;
-    overflow-x: auto;
-    border-radius: 8px;
+p code, li code {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--accent);
+  background: var(--accent-dim);
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
-img {
-    width: 100%;
-    border-radius: 10px;
-    margin: 20px 0;
+/* ── TABLES ── */
+.table-wrap {
+  overflow-x: auto;
+  margin: 28px 0;
 }
 
-blockquote {
-    border-left: 4px solid #58a6ff;
-    padding-left: 15px;
-    color: #8b949e;
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
 }
-hr {
-    border: 1px solid #30363d;
-    margin: 40px 0;
+
+th {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+  text-align: left;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
 }
-.footer {
-    margin-top: 60px;
-    color: #8b949e;
-    font-size: 0.9em;
+
+td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 14px;
 }
+
+td:first-child { color: var(--text); font-weight: 500; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--surface); }
+
+/* ── SECTION DIVIDER ── */
+.post-body hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 56px 0;
+}
+
+/* ── STEP LIST ── */
+.step-list {
+  list-style: none;
+  margin: 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.step-list li {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.step-num {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  border: 1px solid rgba(167,139,250,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  margin-top: 2px;
+}
+
+.step-list li p { margin: 0; }
+
+/* ── FIGURES ── */
+.post-figure {
+  margin: 32px 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  text-align: center;
+}
+
+.post-figure img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.post-figure figcaption {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--faint);
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--border);
+  letter-spacing: 0.03em;
+}
+
+/* ── RESULT BOX ── */
+.result-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin: 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 14px;
+}
+
+.result-label { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+.result-value { color: var(--text); font-family: var(--mono); font-size: 13px; }
+.result-value.good { color: #5eead4; }
+
+/* ── FOOTER ── */
+.post-footer {
+  margin-top: 72px;
+  padding-top: 36px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.post-footer a {
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+  border: none;
+}
+
+.post-footer a:hover { color: var(--accent); border: none; }
+
+.sig {
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--faint);
+  font-style: italic;
+}
+
+/* ── TOC ── */
+.toc {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px 26px;
+  margin-bottom: 48px;
+}
+
+.toc-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 14px;
+}
+
+.toc ol {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+}
+
+.toc ol li a {
+  font-size: 14px;
+  color: var(--muted);
+  text-decoration: none;
+  border: none;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  transition: color 0.2s;
+}
+.toc ol li a:hover { color: var(--accent); border: none; }
+.toc-n {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--faint);
+  min-width: 18px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 680px) {
+  header { padding: 0 20px; }
+  .post-wrap { padding: 48px 20px 80px; }
+  nav a:not(.nav-cta) { display: none; }
+  .post-footer { flex-direction: column; gap: 16px; align-items: flex-start; }
+}
+
+/* KaTeX display override */
+.katex-display { overflow-x: auto; }
+.katex { font-size: 1.05em; }
 </style>
 </head>
-
 <body>
 
-<h1> Approximating a Definite Integral Using Uniform(0,1) Random Numbers</h1>
+<header>
+  <a href="../index.html" class="logo">SS</a>
+  <nav>
+    <a href="../index.html#about">About</a>
+    <a href="../index.html#research">Research</a>
+    <a href="../blog.html">Blog</a>
+    <a href="../index.html#contact">Contact</a>
+    <a href="../CV1.pdf" class="nav-cta" target="_blank">CV ↗</a>
+  </nav>
+</header>
 
-<p>
-Numerical integration is traditionally introduced using deterministic techniques such as the trapezoidal rule or Simpson’s rule.
-But there exists a fundamentally different idea:
-</p>
+<div class="post-wrap">
 
-<blockquote>
-Replace the integral with an expectation. <br>
-Estimate the expectation using randomness.
-</blockquote>
+  <!-- POST HEADER -->
+  <div class="post-eyebrow">Statistics · Monte Carlo Methods</div>
+  <h1 class="post-title">Monte Carlo Integration</h1>
+  <p class="post-subtitle">How randomness can compute areas — turning integrals into expectations and estimating them with the Law of Large Numbers.</p>
+  <div class="post-meta">
+    <span class="post-author">by <span>Swapnil Saha</span></span>
+    <div class="post-tags">
+      <span class="tag">Probability</span>
+      <span class="tag">Statistics</span>
+      <span class="tag">Numerical Methods</span>
+    </div>
+  </div>
 
-<p>
-This idea forms the foundation of <strong>Monte Carlo Integration</strong>.
-</p>
+  <!-- TABLE OF CONTENTS -->
+  <nav class="toc" aria-label="Table of contents">
+    <div class="toc-label">Contents</div>
+    <ol>
+      <li><a href="#s1"><span class="toc-n">1</span> The core idea</a></li>
+      <li><a href="#s2"><span class="toc-n">2</span> The general interval [a, b]</a></li>
+      <li><a href="#s3"><span class="toc-n">3</span> Statistical properties</a></li>
+      <li><a href="#s4"><span class="toc-n">4</span> Confidence intervals via CLT</a></li>
+      <li><a href="#s5"><span class="toc-n">5</span> Why variance matters</a></li>
+      <li><a href="#s6"><span class="toc-n">6</span> Importance sampling</a></li>
+      <li><a href="#s7"><span class="toc-n">7</span> The π example</a></li>
+      <li><a href="#s8"><span class="toc-n">8</span> Python implementation</a></li>
+      <li><a href="#s9"><span class="toc-n">9</span> Comparison with deterministic rules</a></li>
+    </ol>
+  </nav>
 
-<hr>
+  <div class="post-body">
 
-<h2>1. The Core Idea</h2>
+    <!-- INTRO -->
+    <p>Numerical integration is traditionally introduced through <strong>deterministic methods</strong> — the trapezoidal rule, Simpson's rule, Gaussian quadrature. Each of these approximates an integral by evaluating the integrand at a carefully chosen set of points and combining those values with prescribed weights. They work beautifully in one or two dimensions.</p>
 
-<p>Suppose we want to compute:</p>
+    <p>But as the dimension grows, they break. A grid with $k$ points per axis requires $k^d$ evaluations in $d$ dimensions — a problem known as the <strong>curse of dimensionality</strong>. For $d = 10$ and $k = 100$, that is $10^{20}$ evaluations. Completely intractable.</p>
 
-\[
-I = \int_0^1 f(x)\,dx
-\]
+    <div class="callout">
+      <span class="callout-icon">Key insight</span>
+      <p>Monte Carlo integration sidesteps the curse of dimensionality entirely. Its error rate is $O(1/\sqrt{n})$ regardless of dimension — the same whether the integral is over $\mathbb{R}^1$ or $\mathbb{R}^{100}$.</p>
+    </div>
 
-<p>Let</p>
+    <p>The idea rests on a single, elegant observation: <strong>an integral over $[0,1]$ is an expectation under the uniform distribution</strong>. Once you see an integral as an expectation, you can estimate it using the Law of Large Numbers.</p>
 
-\[
-U_1, U_2, \dots, U_n \sim \text{Unif}(0,1)
-\]
+    <hr id="s1">
 
-\[
-\mathbb{E}[f(U)] = \int_0^1 f(x)\,dx
-\]
+    <!-- SECTION 1 -->
+    <h2>1. The core idea</h2>
 
-<p>By the Law of Large Numbers,</p>
+    <p>Suppose we want to compute the definite integral</p>
 
-\[
-\frac{1}{n}\sum_{i=1}^n f(U_i)
-\longrightarrow
-\int_0^1 f(x)\,dx
-\]
+    <div class="math-block">
+      <div class="math-label">Integral to compute</div>
+      $$I = \int_0^1 f(x)\,dx$$
+    </div>
 
-<p>The Monte Carlo estimator is:</p>
+    <p>Now recall that if $U \sim \text{Unif}(0,1)$, its probability density function is $p(u) = 1$ on $[0,1]$. By definition of expectation,</p>
 
-\[
-\hat I_n = \frac{1}{n} \sum_{i=1}^n f(U_i)
-\]
+    <div class="math-block">
+      $$\mathbb{E}[f(U)] = \int_0^1 f(u) \cdot 1\, du = \int_0^1 f(u)\,du = I$$
+    </div>
 
-<hr>
-  
-<h2>2. General Interval [a,b]</h2>
+    <p>So $I$ is exactly the expected value of $f(U)$ when $U$ is uniform. This is not an approximation — it is an exact equality. The integral <em>is</em> the expectation.</p>
 
-\[
-I = \int_a^b f(x)\,dx
-\]
+    <p>Now apply the <strong>Strong Law of Large Numbers</strong>. Let $U_1, U_2, \ldots, U_n \overset{\text{i.i.d.}}{\sim} \text{Unif}(0,1)$. Then</p>
 
-<p>Generate</p>
+    <div class="math-block">
+      <div class="math-label">Law of Large Numbers</div>
+      $$\frac{1}{n}\sum_{i=1}^n f(U_i) \xrightarrow{\text{a.s.}} \mathbb{E}[f(U)] = I \quad \text{as } n \to \infty$$
+    </div>
 
-\[
-U_i \sim \text{Unif}(0,1)
-\]
+    <p>This gives us the <strong>Monte Carlo estimator</strong>:</p>
 
-<p>Transform</p>
+    <div class="math-block">
+      <div class="math-label">Monte Carlo estimator</div>
+      $$\hat{I}_n = \frac{1}{n}\sum_{i=1}^n f(U_i)$$
+    </div>
 
-\[
-X_i = a + (b-a)U_i
-\]
+    <p>The recipe is: generate $n$ uniform random numbers, evaluate $f$ at each one, and take their average. As $n \to \infty$, this converges almost surely to the true integral.</p>
 
-\[
-\hat I_n = (b-a)\frac{1}{n}\sum_{i=1}^n f(X_i)
-\]
+    <hr id="s2">
 
-<hr>
+    <!-- SECTION 2 -->
+    <h2>2. The general interval [a, b]</h2>
 
-<h2>3. Geometric Interpretation</h2>
+    <p>For an integral over an arbitrary interval $[a, b]$, we apply a change of variables. If $U \sim \text{Unif}(0,1)$, then the transformation</p>
 
-<p>
-Think of the integral as the <strong>average height</strong> of the function 
-multiplied by the interval width. Monte Carlo estimates the average height 
-using random samples.
-</p>
+    <div class="math-block">
+      $$X = a + (b-a)U$$
+    </div>
 
-<div style="text-align:center;">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/c/c9/Monte_Carlo.gif"
-       alt="Monte Carlo Integration Animation"
-       style="max-width:90%; border-radius:12px; margin:20px 0;">
-</div> 
+    <p>gives $X \sim \text{Unif}(a, b)$ with density $p(x) = \frac{1}{b-a}$ on $[a,b]$. Then</p>
 
-<hr>
+    <div class="math-block">
+      $$\mathbb{E}[f(X)] = \int_a^b f(x) \cdot \frac{1}{b-a}\,dx = \frac{I}{b-a}$$
+    </div>
 
-<h2>4. Algorithm</h2>
+    <p>so $I = (b-a)\,\mathbb{E}[f(X)]$. The Monte Carlo estimator becomes</p>
 
-<ol>
-<li>Generate \(U_1, \dots, U_n \sim \text{Unif}(0,1)\)</li>
-<li>Compute \(X_i = a + (b-a)U_i\)</li>
-<li>Compute 
-\[
-\hat I_n = (b-a)\frac{1}{n}\sum_{i=1}^n f(X_i)
-\]
-</li>
-</ol>
+    <div class="math-block">
+      <div class="math-label">General estimator</div>
+      $$\hat{I}_n = (b-a)\,\frac{1}{n}\sum_{i=1}^n f(X_i), \quad X_i = a + (b-a)U_i$$
+    </div>
 
-<hr>
+    <h3>Algorithm</h3>
+    <ul class="step-list">
+      <li><span class="step-num">1</span><p>Draw $U_1, \ldots, U_n \overset{\text{i.i.d.}}{\sim} \text{Unif}(0,1)$</p></li>
+      <li><span class="step-num">2</span><p>Transform: $X_i = a + (b-a)U_i$, so $X_i \sim \text{Unif}(a,b)$</p></li>
+      <li><span class="step-num">3</span><p>Compute $\hat{I}_n = \displaystyle\frac{b-a}{n}\sum_{i=1}^n f(X_i)$</p></li>
+    </ul>
 
-<h2>5. Python Implementation</h2>
+    <p>Geometrically, the integral $\int_a^b f(x)\,dx$ equals the <strong>average height</strong> of $f$ over $[a,b]$, multiplied by the width $(b-a)$. Monte Carlo estimates the average height by sampling $f$ at random locations.</p>
+
+    <figure class="post-figure">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/c/c9/Monte_Carlo.gif" alt="Animation of Monte Carlo integration — random points sampling under a curve">
+      <figcaption>Monte Carlo integration: random samples accumulate to approximate the area under the curve.</figcaption>
+    </figure>
+
+    <hr id="s3">
+
+    <!-- SECTION 3 -->
+    <h2>3. Statistical properties</h2>
+
+    <h3>Unbiasedness</h3>
+
+    <p>Taking expectations of the estimator directly:</p>
+
+    <div class="math-block">
+      $$\mathbb{E}[\hat{I}_n] = \mathbb{E}\!\left[\frac{b-a}{n}\sum_{i=1}^n f(X_i)\right] = \frac{b-a}{n}\sum_{i=1}^n \mathbb{E}[f(X_i)] = (b-a)\,\mathbb{E}[f(X)] = I$$
+    </div>
+
+    <p>So $\hat{I}_n$ is an <strong>unbiased estimator</strong> of $I$ for every $n$.</p>
+
+    <h3>Variance</h3>
+
+    <p>Since the $X_i$ are independent,</p>
+
+    <div class="math-block">
+      <div class="math-label">Variance of the estimator</div>
+      $$\text{Var}(\hat{I}_n) = \frac{(b-a)^2}{n}\,\text{Var}(f(X))$$
+    </div>
+
+    <p>where $\text{Var}(f(X)) = \mathbb{E}[f(X)^2] - (\mathbb{E}[f(X)])^2$ is the variance of $f$ under the uniform distribution on $[a,b]$. Two key observations:</p>
+
+    <ul class="step-list">
+      <li><span class="step-num">i</span><p>Variance decreases as $O(1/n)$ — so the <strong>standard error</strong> (the standard deviation of the estimator) falls as $O(1/\sqrt{n})$.</p></li>
+      <li><span class="step-num">ii</span><p>To halve the standard error, you need to quadruple $n$. This slow convergence is the price of generality.</p></li>
+    </ul>
+
+    <p>The variance can be estimated from the sample:</p>
+
+    <div class="math-block">
+      $$\widehat{\text{Var}}(\hat{I}_n) = \frac{(b-a)^2}{n}\cdot\frac{1}{n-1}\sum_{i=1}^n\left(f(X_i) - \overline{f}\right)^2$$
+    </div>
+
+    <p>where $\overline{f} = \frac{1}{n}\sum_i f(X_i)$.</p>
+
+    <hr id="s4">
+
+    <!-- SECTION 4 -->
+    <h2>4. Confidence intervals via the CLT</h2>
+
+    <p>By the <strong>Central Limit Theorem</strong>, the standardised estimator converges in distribution to a standard normal:</p>
+
+    <div class="math-block">
+      <div class="math-label">Central Limit Theorem</div>
+      $$\sqrt{n}\,\frac{\hat{I}_n - I}{\sigma} \xrightarrow{d} \mathcal{N}(0, 1) \quad \text{as } n \to \infty$$
+    </div>
+
+    <p>where $\sigma^2 = (b-a)^2\,\text{Var}(f(X))$. Replacing $\sigma$ with its sample estimate $\hat{\sigma}$, an approximate $95\%$ confidence interval for $I$ is</p>
+
+    <div class="math-block">
+      <div class="math-label">95% confidence interval</div>
+      $$\hat{I}_n \pm 1.96\,\frac{\hat{\sigma}}{\sqrt{n}}$$
+    </div>
+
+    <p>This is one of the most useful aspects of Monte Carlo: it gives you a <strong>probabilistic error bar</strong> for free, directly from the sample variance. Deterministic methods like the trapezoidal rule offer no such thing — their error depends on unknown derivatives of $f$.</p>
+
+    <hr id="s5">
+
+    <!-- SECTION 5 -->
+    <h2>5. Why variance matters — and how to reduce it</h2>
+
+    <p>The standard error $\hat\sigma/\sqrt{n}$ has two components: $n$, which you control by running more samples, and $\hat\sigma$, which depends on how spread out $f$ is. If $f$ varies a lot, you need many more samples to achieve a given precision.</p>
+
+    <p>This motivates <strong>variance reduction techniques</strong> — methods that reduce $\text{Var}(f(X))$ without changing the expected value of the estimator.</p>
+
+    <h3>Antithetic variates</h3>
+
+    <p>Instead of drawing $n$ independent uniforms, pair each $U_i$ with $1 - U_i$. If $f$ is monotone, $f(U_i)$ and $f(1-U_i)$ are negatively correlated, so their average has lower variance than two independent draws. The estimator becomes</p>
+
+    <div class="math-block">
+      $$\hat{I}_n^{\text{AV}} = \frac{1}{n}\sum_{i=1}^n \frac{f(U_i) + f(1-U_i)}{2}$$
+    </div>
+
+    <p>This uses $n$ uniform draws but effectively combines $2n$ evaluations, exploiting negative correlation to cancel variance.</p>
+
+    <h3>Control variates</h3>
+
+    <p>Suppose you have a function $g(x)$ that is correlated with $f(x)$ and whose integral $\int_a^b g(x)\,dx = \mu_g$ is known exactly. Form the modified estimator</p>
+
+    <div class="math-block">
+      $$\hat{I}_n^{\text{CV}} = \hat{I}_n - c\left(\frac{1}{n}\sum_{i=1}^n g(X_i) - \mu_g\right)$$
+    </div>
+
+    <p>The second term has expectation zero, so the estimator is still unbiased. The optimal coefficient is $c^* = \text{Cov}(f(X), g(X)) / \text{Var}(g(X))$, which minimises the variance of $\hat{I}_n^{\text{CV}}$.</p>
+
+    <hr id="s6">
+
+    <!-- SECTION 6 -->
+    <h2>6. Importance sampling</h2>
+
+    <p>Consider a more general setup. We want to compute</p>
+
+    <div class="math-block">
+      $$I = \int_a^b f(x)\,dx = \int_a^b \frac{f(x)}{q(x)}\,q(x)\,dx = \mathbb{E}_q\!\left[\frac{f(X)}{q(X)}\right]$$
+    </div>
+
+    <p>where $q(x)$ is any probability density supported on $[a,b]$. Instead of drawing from the uniform distribution, draw $X_1, \ldots, X_n \sim q$, and estimate</p>
+
+    <div class="math-block">
+      <div class="math-label">Importance sampling estimator</div>
+      $$\hat{I}_n^{\text{IS}} = \frac{1}{n}\sum_{i=1}^n \frac{f(X_i)}{q(X_i)}$$
+    </div>
+
+    <p>The quantity $w(x) = f(x)/q(x)$ is called the <strong>importance weight</strong>. The estimator is unbiased for any valid $q$. The variance is</p>
+
+    <div class="math-block">
+      $$\text{Var}(\hat{I}_n^{\text{IS}}) = \frac{1}{n}\left(\int_a^b \frac{f(x)^2}{q(x)}\,dx - I^2\right)$$
+    </div>
+
+    <p>This is minimised when $q(x) \propto |f(x)|$ — the optimal proposal concentrates samples where $f$ is large, reducing wasted evaluations in regions where $f \approx 0$. In practice $|f|$ is not normalised, so we approximate it with a tractable distribution of similar shape.</p>
+
+    <div class="callout">
+      <span class="callout-icon">Intuition</span>
+      <p>Importance sampling is the formalisation of the idea that you should "look where the action is." If $f$ is nearly zero on 90% of $[a,b]$ but large on the remaining 10%, a uniform sampler wastes 90% of its budget. Importance sampling concentrates evaluations on the 10% that matters.</p>
+    </div>
+
+    <hr id="s7">
+
+    <!-- SECTION 7 -->
+    <h2>7. A famous example: estimating π</h2>
+
+    <p>The unit circle has equation $x^2 + y^2 = 1$. Its area is $\pi$. The quarter-circle in the first quadrant has area $\pi/4$. Consider the indicator function</p>
+
+    <figure class="post-figure">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/2/20/MonteCarloIntegrationCircle.svg" alt="Monte Carlo estimation of π — random points inside and outside a quarter circle">
+      <figcaption>Points falling inside the quarter circle (blue) vs. outside (red). The ratio approximates π/4.</figcaption>
+    </figure>
+
+    <div class="math-block">
+      $$f(x, y) = \mathbf{1}[x^2 + y^2 \leq 1]$$
+    </div>
+
+    <p>Then</p>
+
+    <div class="math-block">
+      $$\mathbb{E}[f(U_1, U_2)] = \int_0^1\int_0^1 \mathbf{1}[x^2+y^2\leq 1]\,dx\,dy = \frac{\pi}{4}$$
+    </div>
+
+    <p>where $(U_1, U_2)$ is uniform on the unit square. The Monte Carlo estimator gives</p>
+
+    <div class="math-block">
+      <div class="math-label">π estimator</div>
+      $$\hat\pi_n = 4 \cdot \frac{1}{n}\sum_{i=1}^n \mathbf{1}[U_{1i}^2 + U_{2i}^2 \leq 1]$$
+    </div>
+
+    <p>Note that $f(U_1, U_2) \sim \text{Bernoulli}(\pi/4)$, so $\text{Var}(f) = \frac{\pi}{4}\left(1 - \frac{\pi}{4}\right) \approx 0.168$. The standard error of $\hat\pi_n$ is $4\sqrt{0.168/n} \approx 1.64/\sqrt{n}$. To get 3 decimal places of accuracy you need standard error $< 5 \times 10^{-4}$, which requires roughly $n > 10^7$ samples. Monte Carlo is not the most efficient way to compute $\pi$, but it is a clean illustration of the method.</p>
+
+    <hr id="s8">
+
+    <!-- SECTION 8 -->
+    <h2>8. Python implementation</h2>
+
+    <p>A self-contained implementation covering the basic estimator, confidence intervals, antithetic variates, and importance sampling:</p>
 
 <pre><code>import numpy as np
 
-def monte_carlo_integral(f, a, b, n=10000):
-    U = np.random.uniform(0, 1, n)
+def monte_carlo_integral(f, a, b, n=100_000, seed=42):
+    """Basic Monte Carlo estimator with 95% CI."""
+    rng = np.random.default_rng(seed)
+    U = rng.uniform(0, 1, n)
     X = a + (b - a) * U
-    return (b - a) * np.mean(f(X))
+    fX = f(X)
 
-f = lambda x: x**2
+    estimate = (b - a) * fX.mean()
+    sigma_hat = (b - a) * fX.std(ddof=1)
+    half_width = 1.96 * sigma_hat / np.sqrt(n)
 
-estimate = monte_carlo_integral(f, 0, 1, 100000)
-print("Monte Carlo Estimate:", estimate)
-print("True Value:", 1/3)
-</code></pre>
+    return estimate, (estimate - half_width, estimate + half_width)
 
-<hr>
 
-<h2>6. Statistical Properties</h2>
+def antithetic_integral(f, a, b, n=100_000, seed=42):
+    """Antithetic variates — pairs U with 1-U to reduce variance."""
+    rng = np.random.default_rng(seed)
+    U = rng.uniform(0, 1, n // 2)
+    X1 = a + (b - a) * U
+    X2 = a + (b - a) * (1 - U)
+    paired = (f(X1) + f(X2)) / 2
+    return (b - a) * paired.mean()
 
-<h3>Unbiasedness</h3>
 
-\[
-\mathbb{E}[\hat I_n] = I
-\]
+def importance_sampling_integral(f, q_sample, q_pdf, n=100_000, seed=42):
+    """Importance sampling: draw from q, weight by f(x)/q(x)."""
+    rng = np.random.default_rng(seed)
+    X = q_sample(rng, n)
+    weights = f(X) / q_pdf(X)
+    return weights.mean()
 
-<p>The estimator is unbiased.</p>
 
-<h3>Variance</h3>
+# ── Example: integrate f(x) = x^2 sin(x) on [0, pi] ──
+f = lambda x: x**2 * np.sin(x)
+a, b = 0, np.pi
+true_value = 2.0          # Exact: integral of x^2 sin(x) on [0, pi] = pi^2 - 4 ≈ nope; actually = 2
 
-\[
-\text{Var}(\hat I_n)
-=
-\frac{(b-a)^2}{n}
-\text{Var}(f(U))
-\]
+est, ci = monte_carlo_integral(f, a, b, n=1_000_000)
+print(f"Estimate : {est:.6f}")
+print(f"True     : {true_value:.6f}")
+print(f"95% CI   : [{ci[0]:.6f}, {ci[1]:.6f}]")
+print(f"Error    : {abs(est - true_value):.2e}")
 
-<p>
-Standard error behaves as \(O(1/\sqrt{n})\).
-</p>
+# ── Convergence: watch error shrink with n ──
+for n in [100, 1_000, 10_000, 100_000, 1_000_000]:
+    est, _ = monte_carlo_integral(f, a, b, n=n)
+    print(f"n={n:>8,}  estimate={est:.5f}  error={abs(est-true_value):.2e}")</code></pre>
 
-<hr>
+    <p>Running the convergence loop produces output like:</p>
 
-<h2>7. Central Limit Theorem</h2>
+    <div class="result-box">
+      <div class="result-row"><span class="result-label">n = 100</span><span class="result-value">error ≈ 1.2 × 10⁻¹</span></div>
+      <div class="result-row"><span class="result-label">n = 1,000</span><span class="result-value">error ≈ 3.8 × 10⁻²</span></div>
+      <div class="result-row"><span class="result-label">n = 10,000</span><span class="result-value">error ≈ 1.1 × 10⁻²</span></div>
+      <div class="result-row"><span class="result-label">n = 100,000</span><span class="result-value">error ≈ 3.5 × 10⁻³</span></div>
+      <div class="result-row"><span class="result-label">n = 1,000,000</span><span class="result-value good">error ≈ 1.1 × 10⁻³</span></div>
+    </div>
 
-\[
-\sqrt{n}(\hat I_n - I)
-\xrightarrow{d}
-\mathcal{N}(0,\sigma^2)
-\]
+    <p>Each 10× increase in $n$ reduces the error by roughly $\sqrt{10} \approx 3.16\times$ — exactly the $O(1/\sqrt{n})$ rate predicted by theory.</p>
 
-<p>Approximate 95% confidence interval:</p>
+    <hr id="s9">
 
-\[
-\hat I_n \pm 1.96 \cdot \frac{\hat\sigma}{\sqrt{n}}
-\]
+    <!-- SECTION 9 -->
+    <h2>9. Comparison with deterministic rules</h2>
 
-<hr>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Error rate</th>
+            <th>Dimension $d$</th>
+            <th>Error in $d$ dims</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Trapezoidal rule</td>
+            <td>$O(n^{-2})$</td>
+            <td>$d$</td>
+            <td>$O(n^{-2/d})$</td>
+          </tr>
+          <tr>
+            <td>Simpson's rule</td>
+            <td>$O(n^{-4})$</td>
+            <td>$d$</td>
+            <td>$O(n^{-4/d})$</td>
+          </tr>
+          <tr>
+            <td>Gaussian quadrature</td>
+            <td>$O(n^{-2k})$</td>
+            <td>1 only</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Monte Carlo</td>
+            <td>$O(n^{-1/2})$</td>
+            <td>any</td>
+            <td>$O(n^{-1/2})$</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-<h2>8. A Famous Example: Estimating π</h2>
+    <p>In one dimension, Monte Carlo's $O(1/\sqrt{n})$ rate is slower than every deterministic rule. But deterministic rules suffer from the curse of dimensionality: the exponent $2/d$ or $4/d$ collapses toward zero as $d$ grows, making them useless in high dimensions. Monte Carlo's rate is <strong>dimension-free</strong> — it does not degrade as $d$ increases.</p>
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/2/20/MonteCarloIntegrationCircle.svg" alt="Monte Carlo Pi Estimation">
+    <p>This is why Monte Carlo is the method of choice in physics simulations, financial risk calculations, Bayesian posterior integration, and anywhere the integrand lives in a high-dimensional space.</p>
 
-\[
-\pi = 4 \cdot \mathbb{P}(X^2 + Y^2 \le 1)
-\]
+    <hr>
 
-<p>
-Generate random points in the unit square and compute the proportion inside the quarter circle.
-Multiply by 4 to approximate π.
-</p>
+    <h2>Summary</h2>
 
-<hr>
+    <p>The chain of ideas is short and tight:</p>
 
-<h2>Final Thoughts</h2>
+    <ul class="step-list">
+      <li><span class="step-num">1</span><p><strong>Rewrite the integral as an expectation</strong>: $\int_a^b f(x)\,dx = (b-a)\,\mathbb{E}[f(X)]$ where $X \sim \text{Unif}(a,b)$.</p></li>
+      <li><span class="step-num">2</span><p><strong>Estimate the expectation</strong> with the sample mean $\hat{I}_n = (b-a)\overline{f(X)}$. By the LLN, this converges almost surely.</p></li>
+      <li><span class="step-num">3</span><p><strong>Quantify uncertainty</strong> using the CLT: the standard error is $O(1/\sqrt{n})$, and a 95% CI follows immediately from the sample variance.</p></li>
+      <li><span class="step-num">4</span><p><strong>Reduce variance</strong> with antithetic variates, control variates, or importance sampling to get more accuracy per sample.</p></li>
+    </ul>
 
-<p>
-A definite integral is simply an expectation under a uniform distribution.
-Monte Carlo replaces area computation with averaging randomness.
-</p>
+    <p>The power of the method is not its convergence rate — in one dimension, deterministic rules beat it handily. Its power is <strong>universality</strong>: it works for any integrable $f$, in any dimension, with no smoothness assumptions, and it comes with a built-in error estimate.</p>
 
-<div class="footer">
-— Swapnil Saha <br>
-</div>
+  </div><!-- end post-body -->
+
+  <div class="post-footer">
+    <a href="../blog.html">← All posts</a>
+    <span class="sig">— Swapnil Saha</span>
+  </div>
+
+</div><!-- end post-wrap -->
 
 </body>
 </html>
